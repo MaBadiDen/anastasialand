@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",
+    "postinstall": "npm rebuild sqlite3 --build-from-source",
     "dev": "ts-node src/app.ts"
   },
   "dependencies": {
@@ -29,13 +30,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/my-typescript-app.git"
+    "url": "git+https://github.com/MaBadiDen/anastasialand.git"
   },
   "keywords": [],
   "author": "Your Name",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yourusername/my-typescript-app/issues"
+    "url": "https://github.com/MaBadiDen/anastasialand/issues"
   },
-  "homepage": "https://github.com/yourusername/my-typescript-app#readme"
+  "homepage": "https://github.com/MaBadiDen/anastasialand#readme"
 }

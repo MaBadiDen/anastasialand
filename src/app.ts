@@ -17,7 +17,7 @@ declare module 'express-session' {
 }
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 // Middleware для авторизации
 function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -36,7 +36,7 @@ function requireAdmin(req: express.Request, res: express.Response, next: express
 }
 
 app.use(session({
-    secret: 'your_secret_key',
+    secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false
 }));
@@ -453,7 +453,7 @@ app.post('/forgot', (req, res) => {
         db.run('UPDATE users SET passwordHash = ? WHERE email = ?', [passwordHash, email], (err) => {
             if (err) return res.redirect('/forgot?error=Ошибка восстановления');
             const mailOptions = {
-                from: 'denistc@mail.ru',
+                from: process.env.MAIL_USER,
                 to: email,
                 subject: 'Восстановление пароля',
                 text: `Ваш временный пароль: ${tempPassword}`
@@ -463,8 +463,8 @@ app.post('/forgot', (req, res) => {
                 port: 465,
                 secure: true,
                 auth: {
-                    user: 'denistc@mail.ru',
-                    pass: 'i60SaEpwa4apKNEsMQte'
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
                 }
             })).sendMail(
                 mailOptions,
