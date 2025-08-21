@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Обучающие видео</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .video-block {
+            max-width: 600px;
+            margin-bottom: 1.5rem;
+            border-radius: 1rem;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            overflow: visible;
+            transition: box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .video-block.active {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .video-title-btn {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: #e2e6ea;
+            border-radius: 1rem 1rem 0 0;
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s;
+            display: block;
+        }
+        .video-title-btn:hover {
+            background: #d1d5db;
+        }
+        .video-player-wrapper {
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.5s, opacity 0.5s;
+            overflow: hidden;
+            width: 100%;
+            background: #fff;
+            border-radius: 0 0 1rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .video-player-wrapper.active {
+            max-height: 800px;
+            opacity: 1;
+            padding: 1rem;
+        }
+        .video-player-wrapper video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .topic-block {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <h1 class="mb-4">Обучающие видео</h1>
+        <div id="topics"></div>
+        <a href="/" class="btn btn-primary mt-3">На главную</a>
+    </div>
+    <script>
+        let currentPlayer = null;
+        fetch('/api/videos')
+            .then(res => res.json())
+            .then(videos => {
+                const topics = {};
+                videos.forEach(video => {
+                    if (!topics[video.topic]) topics[video.topic] = [];
+                    topics[video.topic].push(video);
+                });
+                const topicsDiv = document.getElementById('topics');
+                topicsDiv.innerHTML = '';
+                Object.keys(topics).forEach(topic => {
+                    const block = document.createElement('div');
+                    block.className = 'mb-4 topic-block';
+                    block.innerHTML = `<h4>${topic}</h4>`;
+                    topics[topic].forEach(video => {
+                        const videoBlock = document.createElement('div');
+                        videoBlock.className = 'video-block';
+
+                        // Кнопка с названием видео
+                        const titleBtn = document.createElement('button');
+                        titleBtn.className = 'video-title-btn';
+                        titleBtn.textContent = video.title;
+
+                        // Обёртка для видео
+                        const playerWrapper = document.createElement('div');
+                        playerWrapper.className = 'video-player-wrapper';
+                        playerWrapper.innerHTML = `
+                            <video controls>
+                                <source src="videos/${video.filename}" type="video/mp4">
+                                Ваш браузер не поддерживает видео.
+                            </video>
+                        `;
+
+                        titleBtn.onclick = function() {
+                            // Скрыть предыдущий плеер
+                            if (currentPlayer && currentPlayer !== playerWrapper) {
+                                currentPlayer.classList.remove('active');
+                                currentPlayer.parentElement.classList.remove('active');
+                                currentPlayer.querySelector('video').pause();
+                            }
+                            // Переключить текущий плеер
+                            if (playerWrapper.classList.contains('active')) {
+                                playerWrapper.classList.remove('active');
+                                videoBlock.classList.remove('active');
+                                playerWrapper.querySelector('video').pause();
+                                currentPlayer = null;
+                            } else {
+                                playerWrapper.classList.add('active');
+                                videoBlock.classList.add('active');
+                                currentPlayer = playerWrapper;
+                                playerWrapper.querySelector('video').load();
+                                setTimeout(() => playerWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+                            }
+                        };
+
+                        videoBlock.appendChild(titleBtn);
+                        videoBlock.appendChild(playerWrapper);
+                        block.appendChild(videoBlock);
+                    });
+                    topicsDiv.appendChild(block);
+                });
+            });
+    </script>
+</body>
+</html>
