@@ -16,6 +16,7 @@
         <form id="registerForm" method="POST" action="/register" class="mb-2">
           <input type="text" name="username" class="form-control mb-2" placeholder="Имя пользователя" required />
           <input type="password" name="password" class="form-control mb-2" placeholder="Пароль" required />
+          <div class="form-text mb-2">Минимум 8 символов, буквы и цифра или спецсимвол.</div>
           <input type="email" name="email" class="form-control mb-3" placeholder="Email" required />
           <input type="hidden" name="_csrf" value="" />
           <button type="submit" class="btn btn-primary w-100 mb-2"><i class="bi bi-person-plus me-1"></i> Зарегистрироваться</button>
