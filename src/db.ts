@@ -20,74 +20,59 @@ db.serialize(() => {
     db.run('PRAGMA synchronous = NORMAL');
 });
 
-// Сначала создаём таблицу, если её нет
-db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-        username TEXT PRIMARY KEY,
-        passwordHash TEXT NOT NULL
-    )
-`);
-
-// Затем пробуем добавить столбец role, если его нет
-db.run(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`, (err) => {
-    if (err && !err.message.includes('duplicate column name')) {
-        console.error('Ошибка при добавлении столбца role:', err.message);
-    }
-});
-
-// Затем пробуем добавить столбец email, если его нет
-db.run(`ALTER TABLE users ADD COLUMN email TEXT`, (err) => {
-    if (err && !err.message.includes('duplicate column name')) {
-        console.error('Ошибка при добавлении столбца email:', err.message);
-    }
-});
-
-// Добавляем пользователей вручную при запуске (один раз)
+// Создание и миграции для users в сериализованном порядке
 import { hashPassword } from './security/passwords';
+db.serialize(() => {
+    // Базовая таблица
+    db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            passwordHash TEXT NOT NULL
+        )
+    `);
+    // Миграции колонок
+    db.run(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`, (err) => {
+        if (err && !String(err.message || '').includes('duplicate column name')) {
+            console.error('Ошибка при добавлении столбца role:', err.message);
+        }
+    });
+    db.run(`ALTER TABLE users ADD COLUMN email TEXT`, (err) => {
+        if (err && !String(err.message || '').includes('duplicate column name')) {
+            console.error('Ошибка при добавлении столбца email:', err.message);
+        }
+    });
+    // Дефолтные пользователи и правки после того, как гарантированно есть нужные колонки
+    (async () => {
+        try {
+            const adminHash = await hashPassword('12344321');
+            const userHash = await hashPassword('kaba4ok');
+            db.run('INSERT OR IGNORE INTO users (username, passwordHash, role) VALUES (?, ?, ?)', ['TrueMaBadi', adminHash, 'admin']);
+            db.run('INSERT OR IGNORE INTO users (username, passwordHash, role) VALUES (?, ?, ?)', ['kaba4ok', userHash, 'user']);
+            db.run('UPDATE users SET email = ? WHERE username = ?', ['kaba4ok.den@gmail.com', 'TrueMaBadi']);
+            db.run('UPDATE users SET role = ? WHERE username = ?', ['admin', 'TrueMaBadi']);
+        } catch (e) {
+            console.error('Ошибка инициализации пользователей:', (e as any)?.message || e);
+        }
+    })();
+});
 
-async function addDefaultUsers() {
-    const adminHash = await hashPassword('12344321');
-    const userHash = await hashPassword('kaba4ok');
-
-    db.run(
-        'INSERT OR IGNORE INTO users (username, passwordHash, role) VALUES (?, ?, ?)', 
-        ['TrueMaBadi', adminHash, 'admin']
-    );
-    db.run(
-        'INSERT OR IGNORE INTO users (username, passwordHash, role) VALUES (?, ?, ?)', 
-        ['kaba4ok', userHash, 'user']
-    );
-}
-
-addDefaultUsers();
-
-// Добавляем/обновляем почту для пользователя TrueMaBadi
-db.run(
-    'UPDATE users SET email = ? WHERE username = ?',
-    ['kaba4ok.den@gmail.com', 'TrueMaBadi']
-);
-
-// Гарантируем роль администратора для пользователя TrueMaBadi в существующей БД
-db.run(
-    'UPDATE users SET role = ? WHERE username = ?',
-    ['admin', 'TrueMaBadi']
-);
-
-db.run(`
-    CREATE TABLE IF NOT EXISTS videos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        filename TEXT NOT NULL,
-    topic TEXT NOT NULL,
-        position INTEGER NOT NULL DEFAULT 0
-    )
-`);
-
-// Add position column if upgrading an existing DB without it
-db.run(`ALTER TABLE videos ADD COLUMN position INTEGER NOT NULL DEFAULT 0`, (err) => {
-    if (err && !String(err.message || '').includes('duplicate column name')) {
-        console.error('Ошибка при добавлении столбца position в videos:', err.message);
-    }
+// videos: создание и миграции последовательно
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS videos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            filename TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0
+        )
+    `);
+    // На случай апгрейда старой БД без position
+    db.run(`ALTER TABLE videos ADD COLUMN position INTEGER NOT NULL DEFAULT 0`, (err) => {
+        if (err && !String(err.message || '').includes('duplicate column name')) {
+            console.error('Ошибка при добавлении столбца position в videos:', err.message);
+        }
+    });
 });
 
 // Разделы (темы) для видео
@@ -129,47 +114,55 @@ db.serialize(() => {
 });
 
 // Аудит действий администратора
-db.run(`
-    CREATE TABLE IF NOT EXISTS admin_audit (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL,
-        action TEXT NOT NULL,
-        entity TEXT,
-        entity_id TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-`);
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS admin_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            action TEXT NOT NULL,
+            entity TEXT,
+            entity_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+});
 
 // Тесты для видео
-db.run(`
-    CREATE TABLE IF NOT EXISTS video_tests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        video_id INTEGER NOT NULL,
-        question TEXT NOT NULL,
-        options_json TEXT NOT NULL,
-        answer INTEGER NOT NULL,
-        position INTEGER NOT NULL DEFAULT 0,
-        FOREIGN KEY(video_id) REFERENCES videos(id) ON DELETE CASCADE
-    )
-`);
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS video_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            video_id INTEGER NOT NULL,
+            question TEXT NOT NULL,
+            options_json TEXT NOT NULL,
+            answer INTEGER NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(video_id) REFERENCES videos(id) ON DELETE CASCADE
+        )
+    `);
+});
 
 // Прогресс пользователя по разделам (видео)
-db.run(`
-    CREATE TABLE IF NOT EXISTS user_progress (
-        username TEXT NOT NULL,
-        topic TEXT NOT NULL,
-        unlockedCount INTEGER NOT NULL DEFAULT 1,
-        lastWatchedIndex INTEGER NOT NULL DEFAULT -1,
-        PRIMARY KEY (username, topic)
-    )
-`);
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS user_progress (
+            username TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            unlockedCount INTEGER NOT NULL DEFAULT 1,
+            lastWatchedIndex INTEGER NOT NULL DEFAULT -1,
+            PRIMARY KEY (username, topic)
+        )
+    `);
+});
 
 // Helpful indexes
-db.run('CREATE INDEX IF NOT EXISTS idx_videos_topic_pos ON videos(topic, position, id)');
-db.run('CREATE INDEX IF NOT EXISTS idx_video_tests_video_pos ON video_tests(video_id, position, id)');
-db.run('CREATE INDEX IF NOT EXISTS idx_user_progress_username ON user_progress(username)');
-db.run('CREATE INDEX IF NOT EXISTS idx_admin_audit_user_action_time ON admin_audit(username, action, created_at)');
-db.run('CREATE INDEX IF NOT EXISTS idx_topics_course ON topics(course_id, name)');
+db.serialize(() => {
+    db.run('CREATE INDEX IF NOT EXISTS idx_videos_topic_pos ON videos(topic, position, id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_video_tests_video_pos ON video_tests(video_id, position, id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_user_progress_username ON user_progress(username)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_admin_audit_user_action_time ON admin_audit(username, action, created_at)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_topics_course ON topics(course_id, name)');
+});
 
 // Группы пользователей и членства
 db.serialize(() => {
@@ -311,18 +304,20 @@ db.serialize(() => {
 });
 
 // Тесты для вебинаров (лекций)
-db.run(`
-    CREATE TABLE IF NOT EXISTS webinar_tests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        webinar_id INTEGER NOT NULL,
-        question TEXT NOT NULL,
-        options_json TEXT NOT NULL,
-        answer INTEGER NOT NULL,
-        position INTEGER NOT NULL DEFAULT 0,
-        FOREIGN KEY (webinar_id) REFERENCES webinars(id) ON DELETE CASCADE
-    )
-`);
-db.run('CREATE INDEX IF NOT EXISTS idx_webinar_tests_web_pos ON webinar_tests(webinar_id, position, id)');
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS webinar_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            webinar_id INTEGER NOT NULL,
+            question TEXT NOT NULL,
+            options_json TEXT NOT NULL,
+            answer INTEGER NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (webinar_id) REFERENCES webinars(id) ON DELETE CASCADE
+        )
+    `);
+    db.run('CREATE INDEX IF NOT EXISTS idx_webinar_tests_web_pos ON webinar_tests(webinar_id, position, id)');
+});
 
 export function logAdminAction(username: string, action: string, entity?: string, entityId?: string) {
     db.run('INSERT INTO admin_audit (username, action, entity, entity_id) VALUES (?, ?, ?, ?)', [username, action, entity || null, entityId || null]);
