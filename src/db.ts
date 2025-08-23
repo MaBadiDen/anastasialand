@@ -65,6 +65,19 @@ db.serialize(() => {
             db.run('INSERT OR IGNORE INTO users (username, passwordHash, role) VALUES (?, ?, ?)', ['kaba4ok', userHash, 'user']);
             db.run('UPDATE users SET email = ? WHERE username = ?', ['kaba4ok.den@gmail.com', 'TrueMaBadi']);
             db.run('UPDATE users SET role = ? WHERE username = ?', ['admin', 'TrueMaBadi']);
+
+            // One-time admin bootstrap from env (useful on Render after fresh disk)
+            const envAdmin = (process.env.BOOTSTRAP_ADMIN_USERNAME || '').trim();
+            const envPass = (process.env.BOOTSTRAP_ADMIN_PASSWORD || '').trim();
+            const envEmail = (process.env.BOOTSTRAP_ADMIN_EMAIL || '').trim();
+            if (envAdmin && envPass) {
+                try {
+                    const hash = await hashPassword(envPass);
+                    db.run('INSERT OR IGNORE INTO users (username, passwordHash, role, email) VALUES (?, ?, ?, ?)', [envAdmin, hash, 'admin', envEmail || null]);
+                } catch (ee) {
+                    try { console.error('[bootstrap-admin] failed:', (ee as any)?.message || ee); } catch {}
+                }
+            }
         } catch (e) {
             console.error('Ошибка инициализации пользователей:', (e as any)?.message || e);
         }
