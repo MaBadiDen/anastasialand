@@ -2,6 +2,8 @@
 // Inserts a new user or updates existing user's password and role.
 const sqlite3 = require('sqlite3');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 
 async function main() {
   const [,, usernameArg, passwordArg, roleArg, emailArg] = process.argv;
@@ -14,7 +16,14 @@ async function main() {
   const role = (roleArg ? String(roleArg) : 'user').toLowerCase();
   const email = emailArg ? String(emailArg) : null;
 
-  const db = new sqlite3.Database('users.db');
+  // Resolve DB path similar to src/db.ts
+  const rootDir = path.join(__dirname, '..');
+  const dataDir = path.join(rootDir, 'data');
+  try { fs.mkdirSync(dataDir, { recursive: true }); } catch {}
+  const dataDbPath = path.join(dataDir, 'users.db');
+  const legacyDbPath = path.join(rootDir, 'users.db');
+  const dbPath = fs.existsSync(dataDbPath) ? dataDbPath : (fs.existsSync(legacyDbPath) ? legacyDbPath : dataDbPath);
+  const db = new sqlite3.Database(dbPath);
   try {
     const hash = await bcrypt.hash(password, 10);
     const exists = await new Promise((resolve, reject) => {
