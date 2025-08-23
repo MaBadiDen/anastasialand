@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Админ-панель' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Админ-панель' }) %>
+  <div class="container py-4">
+    <div class="row g-3">
+      <div class="col-12 col-md-6 col-lg-4">
+        <a class="tile d-block text-decoration-none p-3 h-100" href="/admin/users">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="tile-ico"><i class="bi bi-people"></i></span>
+            <span class="tile-title">Пользователи</span>
+          </div>
+          <p class="text-muted mb-0">Список пользователей и управление прогрессом.</p>
+        </a>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <a class="tile d-block text-decoration-none p-3 h-100" href="/video-list">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="tile-ico"><i class="bi bi-collection-play"></i></span>
+            <span class="tile-title">Видео и разделы</span>
+          </div>
+          <p class="text-muted mb-0">Загрузка видео, порядок, разделы, тесты.</p>
+        </a>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <a class="tile d-block text-decoration-none p-3 h-100" href="/admin/webinars">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="tile-ico"><i class="bi bi-easel3"></i></span>
+            <span class="tile-title">Вебинары</span>
+          </div>
+          <p class="text-muted mb-0">Создание и управление вебинарами, открытие тестов.</p>
+        </a>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <a class="tile d-block text-decoration-none p-3 h-100" href="/admin/courses">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="tile-ico"><i class="bi bi-journal-text"></i></span>
+            <span class="tile-title">Курсы и лекторы</span>
+          </div>
+          <p class="text-muted mb-0">Создание курсов и назначение лекторов.</p>
+        </a>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <a class="tile d-block text-decoration-none p-3 h-100" href="/admin/groups">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="tile-ico"><i class="bi bi-people-fill"></i></span>
+            <span class="tile-title">Группы пользователей</span>
+          </div>
+          <p class="text-muted mb-0">Создание групп и управление составом.</p>
+        </a>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <a class="tile d-block text-decoration-none p-3 h-100" href="/admin/audit">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="tile-ico"><i class="bi bi-clipboard-data"></i></span>
+            <span class="tile-title">Журнал действий</span>
+          </div>
+          <p class="text-muted mb-0">Просмотр и очистка журнала действий администратора.</p>
+        </a>
+      </div>
+    </div>
+  </div>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('partials/head', { title: 'Тест вебинара' }) %>
+<body class="page-home theme-violet">
+  <%- include('partials/nav', { title: 'Тест вебинара', username, isAdmin }) %>
+  <div class="container py-5">
+    <div class="row mb-3 mb-md-4">
+      <div class="col">
+        <h1 class="h3 mb-1"><%= title %></h1>
+        <p class="text-muted mb-0">Ответьте на вопросы для прохождения вебинара</p>
+      </div>
+    </div>
+    <% if (error) { %>
+      <div class="alert alert-warning"><%= error %></div>
+    <% } %>
+    <% if (Array.isArray(test) && test.length > 0) { %>
+      <div class="row">
+        <div class="col-12 col-lg-10 col-xl-8">
+          <div class="card tile p-3 p-md-4">
+      <form id="webinarTestForm" class="mb-0">
+        <% test.forEach(function(q, i){ %>
+          <div class="mb-3">
+            <label class="form-label"><b><%= (i+1) + '. ' + q.question %></b></label>
+            <% q.options.forEach(function(opt, j){ %>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="q<%= i %>" id="q<%= i %>o<%= j %>" value="<%= j %>" required>
+                <label class="form-check-label" for="q<%= i %>o<%= j %>"><%= opt %></label>
+              </div>
+            <% }); %>
+          </div>
+        <% }); %>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary">Проверить ответы</button>
+          <a href="/webinar-tests" class="btn btn-outline-secondary">К списку тестов</a>
+        </div>
+      </form>
+      <div id="result" class="alert alert-info d-none mt-3"></div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+  <script src="/js/webinar-test-run.js?v=<%= assetVersion %>"></script>
+  <div id="wt-data" class="d-none" data-json="<%- encodeURIComponent(JSON.stringify({ test })) %>"></div>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('partials/head', { title: 'Обучающие видео' }) %>
+<body class="page-home theme-violet page-videos">
+  <%- include('partials/nav', { title: 'Обучающий сайт', username, isAdmin }) %>
+
+  <!-- offcanvas moved to partial -->
+
+  <div class="container py-4">
+    <div class="row g-3 g-md-4">
+
+    <% if (Array.isArray(topics) && topics.length) { %>
+      <% function slug(s){ return String(s).toLowerCase().replace(/[^\w\u0400-\u04FF]+/g,'-').replace(/^-+|-+$/g,''); } %>
+      <% topics.forEach(function(section, sIdx){ %>
+        <% var pHead = progress[section.name] || { unlockedCount: 1, lastWatchedIndex: -1 }; 
+           var passedCount = Math.max(0, Number(pHead.unlockedCount || 1) - 1);
+           var totalCount = Array.isArray(section.videos) ? section.videos.length : 0; %>
+        <% var percent = totalCount ? Math.round((passedCount * 100) / totalCount) : 0; %>
+        <% var sectionId = slug(section.name) + '-' + sIdx; %>
+        <div class="col-12">
+          <div class="card tile tile-section p-2 p-md-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="tile-ico"><i class="bi bi-collection-play"></i></span>
+                <div class="tile-title h5 mb-0"><%= section.name %></div>
+              </div>
+              <span class="progress-badge" role="progressbar" aria-valuenow="<%= passedCount %>" aria-valuemin="0" aria-valuemax="<%= totalCount %>" data-progress="<%= percent %>">
+                <span><%= passedCount %>/<%= totalCount %></span>
+                <span class="progress-fill"></span>
+              </span>
+            </div>
+            <div class="accordion" id="accordion-<%= sectionId %>">
+          <% section.videos.forEach(function(video, idx){
+               var prog = progress[section.name] || { unlockedCount: 1, lastWatchedIndex: -1 };
+               var isUnlocked = idx < Number(prog.unlockedCount || 1);
+               var vidId = 'vid-' + sectionId + '-' + idx;
+          %>
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-<%= vidId %>">
+              <% var lastWatched = Number((prog && prog.lastWatchedIndex != null) ? prog.lastWatchedIndex : -1); %>
+              <% var isPassed = (idx < passedCount); %>
+              <% var statusClass = isPassed ? 'video-status-passed' : (idx <= lastWatched ? 'video-status-watched' : ''); %>
+              <button class="accordion-button collapsed <%= statusClass %>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<%= vidId %>" aria-expanded="false" aria-controls="collapse-<%= vidId %>">
+                <span><%= video.title %></span>
+              </button>
+            </h2>
+            <div id="collapse-<%= vidId %>" class="accordion-collapse collapse" aria-labelledby="heading-<%= vidId %>" data-bs-parent="#accordion-<%= sectionId %>">
+              <div class="accordion-body">
+                <% if (isUnlocked) { %>
+                  <video data-topic="<%= encodeURIComponent(section.name) %>" data-index="<%= idx %>" src="/videos/<%= encodeURIComponent(video.filename) %>" controls class="video-player"></video>
+                <% } else { %>
+                  <div class="locked-card">
+                    <div class="locked-icon">
+                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1a5 5 0 00-5 5v4H6a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2h-1V6a5 5 0 00-5-5zm-3 9V6a3 3 0 016 0v4H9z"/></svg>
+                    </div>
+                    <div class="locked-text">
+                      <strong>Видео закрыто</strong>
+                      <small>Пройдите тест предыдущего видео, чтобы открыть доступ.</small>
+                    </div>
+                    <div class="ms-auto">
+                      <a class="btn btn-outline-primary" href="/tests.html?topic=<%= encodeURIComponent(section.name) %>">К тесту раздела</a>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+            </div>
+            <% var p = progress[section.name] || { unlockedCount: 1, lastWatchedIndex: -1 }; 
+               var targetIdx = Math.max(0, Number(p.unlockedCount || 1) - 1);
+               var targetVideo = (Array.isArray(section.videos) && section.videos.length > targetIdx) ? section.videos[targetIdx] : null; %>
+            <div class="mt-2 d-flex justify-content-end" data-test-cta data-topic="<%= encodeURIComponent(section.name) %>" data-visible="<%= (Number(p.lastWatchedIndex) >= Number(p.unlockedCount) - 1) ? '1':'0' %>">
+              <a class="btn btn-primary" href="/tests.html?topic=<%= encodeURIComponent(section.name) %>">
+                <% if (targetVideo) { %>
+                  Пройти тест: №<%= (targetIdx + 1) %>
+                <% } else { %>
+                  Пройти тест
+                <% } %>
+              </a>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div class="alert alert-info">Видео пока нет.</div>
+    <% } %>
+  </div>
+
+  <!-- Toast notification for saved progress -->
+  <div class="position-fixed bottom-0 end-0 p-3 toast-container">
+    <div id="watchToast" class="toast align-items-center text-bg-success border-0" role="status" aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+      <div class="d-flex">
+        <div class="toast-body">
+          Прогресс сохранён. Теперь можно пройти тест.
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/videos-page.js?v=<%= assetVersion %>"></script>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

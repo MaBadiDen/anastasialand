@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Журнал действий' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Журнал действий' }) %>
+  <div class="container py-4">
+    <% if (typeof warning !== 'undefined' && warning) { %>
+      <div class="alert alert-warning"><%= warning %></div>
+    <% } %>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <form class="row g-2" method="GET" action="/admin/audit">
+        <div class="col-auto"><input type="text" class="form-control" name="user" placeholder="Пользователь" value="<%= qUser %>"></div>
+        <div class="col-auto"><input type="text" class="form-control" name="action" placeholder="Действие" value="<%= qAction %>"></div>
+        <div class="col-auto"><input type="number" class="form-control" name="days" placeholder="За N дней" value="<%= qDays || '' %>"></div>
+        <div class="col-auto"><button class="btn btn-primary" type="submit">Фильтр</button></div>
+        <div class="col-auto"><a class="btn btn-outline-secondary" href="/admin/audit.csv?user=<%= encodeURIComponent(qUser||'') %>&action=<%= encodeURIComponent(qAction||'') %>&days=<%= encodeURIComponent(String(qDays||'')) %>">CSV</a></div>
+      </form>
+    </div>
+  <div class="table-responsive">
+  <table class="table table-sm table-bordered bg-white"><thead><tr>
+      <th>ID</th><th>Пользователь</th><th>Действие</th><th>Сущность</th><th>Идентификатор</th><th>Время</th>
+    </tr></thead><tbody>
+      <% if (!rows || rows.length === 0) { %>
+        <tr>
+          <td colspan="6">
+            <%- include('../partials/empty', { icon: 'bi-clipboard2-data', title: 'Записей нет', hint: 'Сделайте действие в админке и вернитесь.' }) %>
+          </td>
+        </tr>
+      <% } %>
+      <% rows.forEach(function(r){ %>
+        <tr>
+          <td><%= r.id %></td>
+          <td><%= r.username %></td>
+          <td><%= r.action %></td>
+          <td><%= r.entity || '' %></td>
+          <td><%= String(r.entity_id || '') %></td>
+          <td><%= r.created_at %></td>
+        </tr>
+      <% }) %>
+  </tbody></table>
+  </div>
+
+    <form method="POST" action="/admin/audit/clear" class="mt-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-2 align-items-center">
+        <div class="col-auto">
+          <select class="form-select" name="mode">
+            <option value="all">Очистить всё</option>
+            <option value="days">Старше N дней</option>
+          </select>
+        </div>
+        <div class="col-auto"><input class="form-control" type="number" min="1" name="days" placeholder="Дней"></div>
+  <div class="col-auto"><button class="btn btn-danger js-confirm" data-confirm="Очистить журнал?" type="submit">Очистить</button></div>
+      </div>
+    </form>
+  </div>
+  <script src="/js/confirm.js?v=<%= assetVersion %>"></script>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

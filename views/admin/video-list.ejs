@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Видео' }) %>
+<body class="bg-light theme-violet page-admin-video-list">
+  <%- include('../partials/nav', { title: 'Видео' }) %>
+  <div class="container py-4">
+    <% if (typeof warning !== 'undefined' && warning) { %>
+      <div class="alert alert-warning"><%= warning %></div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
+        <h5 class="mb-3">Порядок видео по темам</h5>
+        <div class="accordion" id="topics">
+          <% function slug(s){ return String(s).toLowerCase().replace(/[^\w\u0400-\u04FF]+/g,'-').replace(/^-+|-+$/g,'') + '-' + Math.abs((String(s).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%9999)); }
+             topics.forEach(function(topic){ const sid = slug(topic.name); %>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="h-<%= sid %>">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c-<%= sid %>" aria-expanded="false">
+                  <%= topic.name %>
+                </button>
+              </h2>
+              <div id="c-<%= sid %>" class="accordion-collapse collapse <%= ((typeof locals !== 'undefined' && locals.activeTopic) && (locals.activeTopic===topic.name)) ? 'show' : '' %>" data-bs-parent="#topics">
+                <div class="accordion-body">
+                  <ul class="list-group" data-topic="<%= topic.name %>">
+                    <% (videosByTopic[topic.name]||[]).sort((a,b)=>a.position-b.position).forEach(function(v){ %>
+                      <li class="list-group-item d-flex align-items-center justify-content-between" data-id="<%= v.id %>" draggable="true">
+                        <div class="d-flex align-items-center">
+                          <span class="me-2 drag-handle">☰</span>
+                            <span class="me-2 badge text-bg-secondary order-badge">#</span>
+                          <strong class="me-2"><%= v.title %></strong>
+                          <small class="text-muted"><%= v.filename %></small>
+                          <small class="ms-2 text-muted">Тестов: <%= typeof v.testCount!=='undefined' ? v.testCount : (videosByTopic[topic.name].find(x=>x.id===v.id)?.testCount || 0) %></small>
+                        </div>
+                        <div class="ms-3 d-flex align-items-center gap-2">
+                          <a class="btn btn-sm btn-info" href="/admin/video-tests/<%= v.id %>"><i class="bi bi-ui-checks-grid me-1"></i> Тесты</a>
+                          <form method="post" action="/admin/delete-video/<%= v.id %>" class="js-confirm" data-confirm="Удалить видео?">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button class="btn btn-sm btn-danger" type="submit"><i class="bi bi-trash me-1"></i> Удалить</button>
+                          </form>
+                        </div>
+                      </li>
+                    <% }) %>
+                  </ul>
+                  <button class="btn btn-primary btn-sm mt-2" data-action="save" data-topic="<%= topic.name %>"><i class="bi bi-save me-1"></i> Сохранить порядок</button>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0">Загрузка видео</h5>
+          <div class="btn-group">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#cleanupOrphansModal">Очистить «осиротевшие» видео</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#cleanupOrphanTestsModal">Очистить «осиротевшие» тесты</button>
+          </div>
+        </div>
+        <form class="card card-body" method="post" action="/admin/upload-video" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% if (!topics || topics.length === 0) { %>
+            <div class="alert alert-warning">Сначала создайте раздел в блоке ниже, а затем загрузите видео.</div>
+          <% } %>
+          <div class="mb-2">
+            <label class="form-label">Файл</label>
+            <input required class="form-control" type="file" name="video" <%= (topics && topics.length>0) ? '' : 'disabled' %>>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Название</label>
+            <input required class="form-control" type="text" name="title" <%= (topics && topics.length>0) ? '' : 'disabled' %>>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Тема</label>
+            <select class="form-select" name="topic" required <%= (topics && topics.length>0) ? '' : 'disabled' %>>
+              <% topics.forEach(function(t, idx){ %>
+                <option value="<%= t.name %>" <%= (typeof locals!=='undefined' && locals.activeTopic===t.name) ? 'selected' : '' %>><%= t.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <button class="btn btn-primary" type="submit" <%= (topics && topics.length>0) ? '' : 'disabled' %>>Загрузить</button>
+        </form>
+        <div class="card card-body mt-3">
+          <h6 class="mb-2">Добавить раздел</h6>
+          <form class="d-flex gap-2" method="post" action="/admin/add-topic">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input class="form-control" type="text" name="name" placeholder="Название раздела" required>
+            <button class="btn btn-primary" type="submit">Добавить</button>
+          </form>
+          <ul class="list-group mt-3">
+            <% topics.forEach(function(t){ %>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><%= t.name %></span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#confirmDeleteTopicModal"
+                  data-topic-id="<%= typeof t.id !== 'undefined' ? t.id : '' %>"
+                  data-topic-name="<%- t.name %>"
+                  <%= (!t.name && typeof t.id === 'undefined') ? 'disabled' : '' %>
+                >Удалить</button>
+              </li>
+            <% }) %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Topic Modal -->
+  <div class="modal fade" id="confirmDeleteTopicModal" tabindex="-1" aria-labelledby="confirmDeleteTopicLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" method="post" action="/admin/delete-topic-any">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmDeleteTopicLabel">Удалить раздел</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="id" value="">
+          <input type="hidden" name="name" value="">
+          <p class="mb-2">Вы уверены, что хотите удалить раздел: <strong data-role="topic-name"></strong>?</p>
+          <div class="alert alert-warning mb-0">
+            Будут удалены:
+            <ul class="mb-0">
+              <li>все видео внутри раздела (и их файлы);</li>
+              <li>прогресс пользователей по этому разделу.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-danger">Удалить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cleanup Orphans Modal -->
+  <div class="modal fade" id="cleanupOrphansModal" tabindex="-1" aria-labelledby="cleanupOrphansLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" method="post" action="/admin/videos/cleanup-orphans">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cleanupOrphansLabel">Очистить «осиротевшие» записи</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <p>Будут удалены видео, чьи темы отсутствуют в списке разделов, и прогресс по таким темам. Файлы видео также будут удалены.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-danger">Очистить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cleanup Orphan Tests Modal -->
+  <div class="modal fade" id="cleanupOrphanTestsModal" tabindex="-1" aria-labelledby="cleanupOrphanTestsLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" method="post" action="/admin/tests/cleanup-orphans">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cleanupOrphanTestsLabel">Очистить «осиротевшие» тесты</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <p>Будут удалены вопросы тестов, чьи видео были удалены и больше не существуют.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-danger">Очистить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/confirm.js?v=<%= assetVersion %>"></script>
+  <script src="/js/admin-video-list.js?v=<%= assetVersion %>"></script>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

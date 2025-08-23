@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Группы пользователей' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Группы пользователей' }) %>
+  <div class="container py-4">
+    <div class="row g-4">
+      <div class="col-12 col-lg-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Создать группу</h5>
+            <form method="post" action="/admin/groups/add">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="mb-3">
+                <label class="form-label">Название</label>
+                <input class="form-control" name="name" required maxlength="100">
+              </div>
+              <button class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Создать</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-8">
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Группы</h5>
+            <div class="table-responsive">
+        <table class="table table-sm align-middle" id="groupsTable">
+                <thead>
+          <tr><th class="col-id">ID</th><th>Название</th><th class="text-end col-actions">Действия</th></tr>
+                </thead>
+                <tbody>
+                <% if (!groups || groups.length === 0) { %>
+                  <tr>
+                    <td colspan="3">
+                      <%- include('../partials/empty', { icon: 'bi-people', title: 'Группы ещё не созданы', hint: 'Создайте первую группу слева.' }) %>
+                    </td>
+                  </tr>
+                <% } %>
+                <% (groups||[]).forEach(g => { %>
+                  <tr data-group-id="<%= g.id %>" data-group-name="<%- g.name %>">
+                    <td class="gid"><%= g.id %></td>
+                    <td class="gname"><%= g.name %></td>
+                    <td class="text-end">
+                      <button type="button" class="btn btn-sm btn-primary me-2 btn-edit" data-id="<%= g.id %>" data-name="<%- g.name %>" data-bs-toggle="modal" data-bs-target="#groupModal"><i class="bi bi-pencil-square me-1"></i> Редактировать</button>
+                      <form method="post" action="/admin/groups/delete" class="d-inline js-confirm" data-confirm="Удалить группу? Членства будут удалены.">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="id" value="<%= g.id %>">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i> Удалить</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single reusable modal -->
+        <div class="modal fade" id="groupModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Редактирование группы: <span class="text-muted">#<span id="gm-id"></span></span> <span class="group-name" id="gm-name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-4">
+                  <h6 class="mb-2">Название группы</h6>
+                  <form class="d-flex gap-2" id="gm-rename" method="post" action="/admin/groups/rename">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="id" id="gm-rename-id" value="">
+                    <input class="form-control" name="name" id="gm-rename-name" value="" maxlength="100" required>
+                    <button class="btn btn-outline-primary"><i class="bi bi-check2-circle me-1"></i> Сохранить</button>
+                  </form>
+                </div>
+
+                <div>
+                  <h6 class="mb-2">Участники</h6>
+                  <div id="gm-members-empty" class="text-muted d-none">Нет участников.</div>
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle" id="gm-members-table">
+                      <thead>
+                        <tr><th>Пользователь</th><th class="text-end">Действия</th></tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <form class="row g-2 align-items-end mt-2" id="gm-add" method="post" action="/admin/groups/members/add">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="groupId" id="gm-add-id" value="">
+                    <div class="col-12 col-md-8">
+                      <label class="form-label">Пользователь</label>
+                      <select class="form-select" name="username" id="gm-add-select"></select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <button class="btn btn-primary w-100"><i class="bi bi-person-plus me-1"></i> Добавить</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/confirm.js?v=<%= assetVersion %>"></script>
+  <script src="/js/admin-groups.js?v=<%= assetVersion %>"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
+*** End Patch
+      // Helpers
+      function toFormBody(form){
+        const data = new URLSearchParams();
+        Array.from(new FormData(form).entries()).forEach(function(entry){ data.append(entry[0], String(entry[1])); });
+        return data.toString();
+      }
+      function setMembers(modal, members, csrfToken, groupId){
+        const tbody = modal.querySelector('#gm-members-table tbody');
+        const empty = modal.querySelector('#gm-members-empty');
+        if (!tbody || !empty) return;
+        if (!members || members.length === 0){
+          empty.classList.remove('d-none');
+          tbody.innerHTML = '';
+        } else {
+          empty.classList.add('d-none');
+          tbody.innerHTML = members.map(function(m){ return (
+            '<tr>'+
+              '<td>'+m.username+'</td>'+
+              '<td class="text-end">'+
+                '<form method="post" action="/admin/groups/members/remove" class="d-inline gm-remove">'+
+                  '<input type="hidden" name="_csrf" value="'+csrfToken+'">'+
+                  '<input type="hidden" name="username" value="'+m.username+'">'+
+                  '<input type="hidden" name="groupId" value="'+groupId+'">'+
+                  '<button class="btn btn-sm btn-outline-danger">Убрать</button>'+
+                '</form>'+
+              '</td>'+
+            '</tr>'
+          ); }).join('');
+        }
+      }
+      function setAvailable(modal, available){
+        const select = modal.querySelector('#gm-add-select');
+        if (!select) return;
+        if (!available || available.length === 0){
+          select.innerHTML = '<option disabled>Нет доступных пользователей</option>';
+          select.disabled = true;
+        } else {
+          select.disabled = false;
+          select.innerHTML = available.map(function(u){ return '<option value="'+u.username+'">'+u.username+'</option>'; }).join('');
+        }
+      }
+
+      var currentGroupId = null;
+      var csrfToken = '<%- csrfToken %>';
+      var modalEl = document.getElementById('groupModal');
+      var modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+      var titleId = document.getElementById('gm-id');
+      var titleName = document.getElementById('gm-name');
+      var renameForm = document.getElementById('gm-rename');
+      var renameId = document.getElementById('gm-rename-id');
+      var renameName = document.getElementById('gm-rename-name');
+      var addForm = document.getElementById('gm-add');
+      var addId = document.getElementById('gm-add-id');
+
+      function openGroup(id, name){
+        currentGroupId = id;
+        if (titleId) titleId.textContent = String(id);
+        if (titleName) titleName.textContent = name;
+        if (renameId) renameId.value = String(id);
+        if (renameName) renameName.value = name;
+        if (addId) addId.value = String(id);
+        // fetch details
+        fetch('/admin/groups/'+id, { headers: { 'Accept': 'application/json' }})
+          .then(function(r){ return r.json(); })
+          .then(function(json){
+            if (!json || json.ok === false) throw new Error('load');
+            setMembers(modalEl, json.members || [], csrfToken, id);
+            setAvailable(modalEl, json.availableUsers || []);
+          })
+          .catch(function(){ setMembers(modalEl, [], csrfToken, id); setAvailable(modalEl, []); });
+        if (modal) modal.show();
+      }
+
+      // Click handlers for edit buttons
+      document.querySelectorAll('#groupsTable .btn-edit').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var id = Number((btn.getAttribute('data-id')||'').trim());
+          var name = btn.getAttribute('data-name') || '';
+          openGroup(id, name);
+        });
+      });
+
+      // Intercept rename
+      if (renameForm) {
+        renameForm.addEventListener('submit', function(e){
+          e.preventDefault();
+          fetch(renameForm.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+            body: toFormBody(renameForm)
+          }).then(function(r){ return r.json(); }).then(function(json){
+            if (!json || json.ok === false) throw new Error('save');
+            var name = json.group && json.group.name ? json.group.name : renameName.value;
+            if (titleName) titleName.textContent = name;
+            // update row name
+            var row = document.querySelector('tr[data-group-id="'+currentGroupId+'"] .gname');
+            if (row) row.textContent = name;
+            // update data-name on the edit button
+            var btn = document.querySelector('#groupsTable tr[data-group-id="'+currentGroupId+'"] .btn-edit');
+            if (btn) btn.setAttribute('data-name', name);
+          }).catch(function(){ alert('Не удалось сохранить изменения'); });
+        });
+      }
+
+      // Intercept add member
+      if (addForm) {
+        addForm.addEventListener('submit', function(e){
+          e.preventDefault();
+          fetch(addForm.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+            body: toFormBody(addForm)
+          }).then(function(r){ return r.json(); }).then(function(json){
+            if (!json || json.ok === false) throw new Error('save');
+            setMembers(modalEl, json.members || [], csrfToken, currentGroupId);
+            setAvailable(modalEl, json.availableUsers || []);
+          }).catch(function(){ alert('Не удалось сохранить изменения'); });
+        });
+      }
+
+      // Delegate remove member clicks within modal
+      if (modalEl) {
+        modalEl.addEventListener('submit', function(e){
+          var form = e.target;
+          if (!(form && form.classList && form.classList.contains('gm-remove'))) return;
+          e.preventDefault();
+          fetch(form.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+            body: toFormBody(form)
+          }).then(function(r){ return r.json(); }).then(function(json){
+            if (!json || json.ok === false) throw new Error('save');
+            setMembers(modalEl, json.members || [], csrfToken, currentGroupId);
+            setAvailable(modalEl, json.availableUsers || []);
+          }).catch(function(){ alert('Не удалось сохранить изменения'); });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

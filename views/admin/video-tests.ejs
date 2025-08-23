@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Тесты для видео' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Тесты для видео' }) %>
+  <div class="container py-4">
+    <% if (typeof warning !== 'undefined' && warning) { %>
+      <div class="alert alert-warning"><%= warning %></div>
+    <% } %>
+    <div class="mb-3">
+      <h5 class="mb-1">Видео: <%= video.title %></h5>
+      <div class="text-muted small"><code><%= video.filename %></code>; тема: <%= video.topic %></div>
+    </div>
+
+    <div class="mb-4">
+      <h6>Добавить вопрос</h6>
+      <form class="card card-body" method="post" action="/admin/video-tests/upsert">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="videoId" value="<%= video.id %>">
+        <div class="mb-2">
+          <label class="form-label">Вопрос</label>
+          <textarea required class="form-control" name="question"></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Варианты (по одному на строку)</label>
+          <textarea required class="form-control" name="options"></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Правильный ответ</label>
+          <input required class="form-control" name="answer" type="text">
+        </div>
+  <button class="btn btn-primary" type="submit">Добавить</button>
+      </form>
+    </div>
+
+    <div>
+      <h6>Список вопросов</h6>
+      <ol class="list-group list-group-numbered">
+        <% tests.forEach(function(t){ %>
+          <li class="list-group-item">
+            <form class="mb-2" method="post" action="/admin/video-tests/update">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="id" value="<%= t.id %>">
+              <input type="hidden" name="videoId" value="<%= video.id %>">
+              <div class="mb-2">
+                <label class="form-label">Вопрос</label>
+                <textarea class="form-control" name="question" rows="2" required><%= t.question %></textarea>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Варианты (по одному в строке)</label>
+                <textarea class="form-control" name="options" rows="3" required><%= JSON.parse(t.options_json||'[]').join('\n') %></textarea>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Правильный ответ (номер с 0)</label>
+                <input class="form-control" type="number" min="0" name="answer" value="<%= t.answer %>">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Позиция</label>
+                <input class="form-control" type="number" min="0" name="position" value="<%= t.position || 0 %>">
+              </div>
+              <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>
+              <button class="btn btn-sm btn-outline-danger js-del-test" type="button" data-id="<%= t.id %>" data-csrf="<%= csrfToken %>">Удалить</button>
+            </form>
+          </li>
+        <% }) %>
+      </ol>
+    </div>
+  </div>
+  <script src="/js/admin-video-tests.js?v=<%= assetVersion %>"></script>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

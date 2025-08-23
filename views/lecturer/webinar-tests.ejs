@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Управление тестами лекции' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Управление тестами лекции' }) %>
+  <div class="container py-4">
+    <div class="mb-3">
+      <h5 class="mb-1">Вебинар: <%= webinar.summary %></h5>
+      <div class="text-muted small">ID: <%= webinar.id %></div>
+    </div>
+
+    <div class="mb-4">
+      <h6>Добавить вопрос</h6>
+      <form class="card card-body" method="post" action="/lecturer/webinar-tests/upsert">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="webinarId" value="<%= webinar.id %>">
+        <div class="mb-2">
+          <label class="form-label">Вопрос</label>
+          <textarea required class="form-control" name="question" rows="2"></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Варианты (по одному на строке)</label>
+          <textarea required class="form-control" name="options" rows="3"></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Правильный ответ (номер с 0)</label>
+          <input required class="form-control" name="answer" type="number" min="0">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Позиция</label>
+          <input class="form-control" name="position" type="number" min="0" value="0">
+        </div>
+  <button class="btn btn-primary" type="submit">Добавить</button>
+      </form>
+    </div>
+
+    <div>
+      <h6>Список вопросов</h6>
+      <% if (!tests || tests.length === 0) { %>
+        <div class="text-muted">Пока нет вопросов</div>
+      <% } else { %>
+        <ol class="list-group list-group-numbered">
+          <% tests.forEach(function(t){ %>
+            <li class="list-group-item">
+              <form class="mb-2" method="post" action="/lecturer/webinar-tests/update">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="id" value="<%= t.id %>">
+                <input type="hidden" name="webinarId" value="<%= webinar.id %>">
+                <div class="mb-2">
+                  <label class="form-label">Вопрос</label>
+                  <textarea class="form-control" name="question" rows="2" required><%= t.question %></textarea>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Варианты (по одному в строке)</label>
+                  <textarea class="form-control" name="options" rows="3" required><%= JSON.parse(t.options_json||'[]').join('\n') %></textarea>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Правильный ответ (номер с 0)</label>
+                  <input class="form-control" type="number" min="0" name="answer" value="<%= t.answer %>">
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Позиция</label>
+                  <input class="form-control" type="number" min="0" name="position" value="<%= t.position || 0 %>">
+                </div>
+                <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>
+                <button class="btn btn-sm btn-outline-danger js-del-webinar-test" type="button" data-id="<%= t.id %>" data-csrf="<%= csrfToken %>">Удалить</button>
+              </form>
+            </li>
+          <% }) %>
+        </ol>
+      <% } %>
+    </div>
+
+    <div class="mt-3">
+      <a class="btn btn-link" href="/lecturer/webinars">← К списку вебинаров</a>
+    </div>
+  </div>
+  <script src="/js/lecturer-webinar-tests.js?v=<%= assetVersion %>"></script>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

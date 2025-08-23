@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('partials/head', { title: 'Тесты' }) %>
+<body class="page-home theme-violet">
+  <%- include('partials/nav', { title: 'Тесты', username, isAdmin }) %>
+
+  <!-- offcanvas moved to partial -->
+  <div class="container py-5">
+    <div class="row mb-4">
+      <div class="col">
+        <h1 class="h3 mb-1">Тест <%= topic ? '— ' + topic : '' %></h1>
+        <p class="text-muted">Ответьте на вопросы для прохождения раздела</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12 col-lg-10 col-xl-8">
+        <div class="card tile p-3 p-md-4">
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-warning"><%= error %></div>
+    <% } %>
+  <div id="test-data" class="d-none" data-json="<%- encodeURIComponent(JSON.stringify({ test: test, topic: topic || null })) %>"></div>
+  <% if (!Array.isArray(test) || test.length === 0) { %>
+    <div class="alert alert-warning">Для этого видео тест пока не добавлен.</div>
+  <% } else { %>
+    <form id="testForm" class="mb-4">
+      <% test.forEach(function(q, i){ %>
+        <div class="mb-3">
+          <label class="form-label"><b><%= (i+1) + '. ' + q.question %></b></label>
+          <% q.options.forEach(function(opt, j){ %>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="q<%= i %>" id="q<%= i %>o<%= j %>" value="<%= j %>" required>
+              <label class="form-check-label" for="q<%= i %>o<%= j %>"><%= opt %></label>
+            </div>
+          <% }); %>
+        </div>
+      <% }); %>
+  <button type="submit" class="btn btn-primary">Проверить ответы</button>
+      <a
+        <% if (topic) { %>
+          href="/videos.html?topic=<%= encodeURIComponent(topic) %>"
+        <% } else { %>
+          href="/videos.html"
+        <% } %>
+        class="btn btn-outline-secondary ms-2"
+        role="button"
+      >Вернуться к видео</a>
+    </form>
+  <% } %>
+  <div id="result" class="alert alert-info d-none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/tests-page.js?v=<%= assetVersion %>"></script>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

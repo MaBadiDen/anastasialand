@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('partials/head', { title: 'Обучающий сайт' }) %>
+<body class="page-home theme-violet">
+  <%- include('partials/nav', { title: 'Обучающий сайт', username, isAdmin }) %>
+
+  <!-- Full-height split landing with 3 expanding panels -->
+  <section class="split-hero hero-violet">
+    <div class="split-landing" role="navigation" aria-label="Основные разделы">
+      <a class="split-item split-videos" href="/videos.html" aria-label="Видео">
+        <span class="center">
+          <span class="icon"><i class="bi bi-camera-video"></i></span>
+          <span class="label" aria-hidden="true">
+            <span class="label-title">Видео</span>
+            <span class="label-text">Смотрите уроки и продвигайтесь по курсу</span>
+          </span>
+        </span>
+      </a>
+      <a class="split-item split-presentations" href="/presentations.html" aria-label="Презентации">
+        <span class="center">
+          <span class="icon"><i class="bi bi-easel3"></i></span>
+          <span class="label" aria-hidden="true">
+            <span class="label-title">Презентации</span>
+            <span class="label-text">Материалы к занятиям и конспекты</span>
+          </span>
+        </span>
+      </a>
+    <a class="split-item split-tests" href="/webinar-tests" aria-label="Тесты по вебинарам">
+        <span class="center">
+          <span class="icon"><i class="bi bi-list-check"></i></span>
+          <span class="label" aria-hidden="true">
+            <span class="label-title">Тесты</span>
+        <span class="label-text">Тесты после лекций для самопроверки</span>
+          </span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

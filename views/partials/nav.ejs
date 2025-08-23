@@ -1,0 +1,64 @@
+<nav class="navbar navbar-expand bg-white border-bottom position-sticky top-0 z-3 luxe">
+  <div class="container-fluid">
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small"><%= typeof username !== 'undefined' ? username : (typeof locals !== 'undefined' ? locals.username : '') %></span>
+  <a href="/cabinet" class="btn btn-cabinet d-none d-sm-inline-flex <%= (typeof active !== 'undefined' && active==='cabinet') || (typeof locals !== 'undefined' && locals.active==='cabinet') ? 'active' : '' %>" aria-label="Личный кабинет">
+        <i class="bi bi-person-circle"></i>
+    <span class="ms-1">Кабинет</span>
+      </a>
+      <button class="btn btn-outline-secondary btn-icon" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Открыть меню">☰</button>
+    </div>
+    <span class="navbar-brand mx-auto mb-0 h1"><span class="brand-accent"><%= typeof title !== 'undefined' ? title : 'Обучающий сайт' %></span></span>
+    <div class="d-flex align-items-center gap-2">
+      <button id="notifBell" class="btn btn-icon position-relative" type="button" aria-label="Уведомления">
+        <i class="bi bi-bell fs-5"></i>
+  <span id="notifDot" class="position-absolute p-1 bg-danger border border-light rounded-circle d-none notif-dot"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="sidebarLabel">Навигация</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="mb-3 text-muted small">Вы вошли как: <strong><%= typeof username !== 'undefined' ? username : (typeof locals !== 'undefined' ? locals.username : '') %></strong></div>
+    <div class="list-group">
+      <a class="list-group-item list-group-item-action" href="/">Главная</a>
+      <a class="list-group-item list-group-item-action" href="/videos.html">Видео</a>
+      <a class="list-group-item list-group-item-action" href="/presentations.html">Презентации</a>
+  <a class="list-group-item list-group-item-action" href="/webinar-tests">Тесты по вебинарам</a>
+    </div>
+    <% if ((typeof isAdmin !== 'undefined' && isAdmin) || (typeof locals !== 'undefined' && locals.isAdmin)) { %>
+      <a class="btn btn-warning w-100 mt-3" href="/admin">Админ-панель</a>
+    <% } %>
+  <% if ((typeof role !== 'undefined' && (role === 'lecturer' || role === 'admin')) || (typeof locals !== 'undefined' && (locals.role === 'lecturer' || locals.role === 'admin'))) { %>
+      <a class="btn btn-outline-primary w-100 mt-3" href="/lecturer">Панель лектора</a>
+    <% } %>
+  </div>
+</div>
+
+<!-- Notifications panel (offcanvas right) -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="notificationsPanel" aria-labelledby="notificationsLabel">
+  <div class="offcanvas-header align-items-start">
+    <div>
+      <h5 id="notificationsLabel" class="offcanvas-title mb-1">Уведомления</h5>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Действия с уведомлениями">
+        <button id="notifReadAll" type="button" class="btn btn-outline-primary">Прочитать все</button>
+        <button id="notifClearAll" type="button" class="btn btn-outline-danger">Очистить все</button>
+      </div>
+    </div>
+    <button type="button" class="btn-close ms-2" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <div id="notifList" class="list-group list-group-flush small">
+      <div class="list-group-item text-muted">Загрузка…</div>
+    </div>
+  </div>
+  <div class="offcanvas-footer p-2 text-end small text-muted">
+    Показаны последние 50 уведомлений
+  </div>
+  <script src="/js/nav-notifications.js?v=<%= assetVersion %>"></script>
+</div>

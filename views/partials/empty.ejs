@@ -1,0 +1,22 @@
+<% /*
+  Reusable empty state block
+  Props:
+    - icon: Bootstrap Icons class (e.g., 'bi-inboxes')
+    - title: Main message (string)
+    - hint: Optional secondary text (string)
+    - action: Optional { href, text, variant }
+*/ %>
+<div class="empty-state text-center py-4">
+  <div class="empty-ico text-muted mb-2">
+    <i class="bi <%= icon || 'bi-inboxes' %>"></i>
+  </div>
+  <div class="fw-semibold"><%= title %></div>
+  <% if (typeof hint !== 'undefined' && hint) { %>
+    <div class="text-muted small mt-1"><%= hint %></div>
+  <% } %>
+  <% if (action && action.href && action.text) { %>
+    <div class="mt-3">
+      <a href="<%= action.href %>" class="btn btn-sm <%= action.variant || 'btn-primary' %>"><%= action.text %></a>
+    </div>
+  <% } %>
+</div>

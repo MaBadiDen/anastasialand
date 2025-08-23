@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Панель лектора — Вебинары' }) %>
+<body class="bg-light theme-violet page-lecturer-webinars">
+  <%- include('../partials/nav', { title: 'Панель лектора' }) %>
+  <div class="container py-4">
+    <% if (typeof warning !== 'undefined' && warning) { %>
+      <div class="alert alert-warning"><%= warning %></div>
+    <% } %>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="page-title mb-0">Вебинары</h4>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-lg-7">
+        <h6 class="mb-2">Список вебинаров</h6>
+        <div class="table-responsive">
+    <table class="table table-sm table-hover table-striped table-bordered bg-white align-middle mb-0">
+          <thead>
+      <tr><th>#</th><th>Тема</th><th>Начало</th><th>Конец</th><th>Курс</th><th>Открыто</th><th>Участники</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% if (!webinars || webinars.length === 0) { %>
+              <tr>
+                <td colspan="8">
+                  <%- include('../partials/empty', { icon: 'bi-easel3', title: 'Пока нет вебинаров', hint: 'Создайте первый вебинар справа.' }) %>
+                </td>
+              </tr>
+            <% } else { %>
+        <% webinars.forEach(function(w, idx){ %>
+                <tr>
+          <td><%= idx + 1 %></td>
+                  <td>
+                    <div class="d-flex flex-column">
+                      <span><%= w.summary || ('Вебинар #' + w.id) %></span>
+                      <small class="mt-1">
+                        <span class="webinar-status badge rounded-pill text-bg-secondary" data-start-utc="<%= w.start_time || '' %>" data-end-utc="<%= w.end_time || '' %>"></span>
+                      </small>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="dt-local" data-utc="<%= w.start_time || '' %>"><%= w.start_time || '' %></span>
+                  </td>
+                  <td>
+                    <span class="dt-local" data-utc="<%= w.end_time || '' %>"><%= w.end_time || '' %></span>
+                  </td>
+                  <td>
+                    <% const course = (courses||[]).find(c=>c.id===w.course_id); %>
+                    <%= course ? course.name : ('курс #' + (w.course_id || '')) %>
+                  </td>
+                  <td>
+                    <div class="d-flex flex-column">
+                      <span class="badge <%= w.tests_open ? 'text-bg-success' : 'text-bg-secondary' %>"><%= w.tests_open ? 'Открыто' : 'Закрыто' %></span>
+                      <% if (!w.tests_open && w.tests_open_at) { %>
+                        <small class="text-muted">Откроется: <span class="dt-local" data-utc="<%= w.tests_open_at %>"><%= new Date(w.tests_open_at).toLocaleString() %></span> (<span class="rel-time" data-utc="<%= w.tests_open_at %>"></span>)</small>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#attendeesModal-<%= w.id %>" data-bs-toggle="tooltip" title="Просмотр и управление участниками">Участники</button>
+
+                    <div class="modal fade" id="attendeesModal-<%= w.id %>" tabindex="-1" aria-hidden="true" data-webinar-id="<%= w.id %>" data-users-json="<%- encodeURIComponent(JSON.stringify((users||[]).map(function(u){ return u.username; }))) %>" data-groups-json="<%- encodeURIComponent(JSON.stringify((groups||[]).map(function(g){ return { id: g.id, name: g.name }; }))) %>">
+                      <div class="modal-dialog modal-dialog-scrollable">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Участники вебинара</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                          </div>
+                          <div class="modal-body">
+                            <% const userList = (attendeeUsersByWebinar && attendeeUsersByWebinar[w.id]) || []; %>
+                            <% const gList = (attendeeGroupsByWebinar && attendeeGroupsByWebinar[w.id]) || []; %>
+                            <div class="mb-3">
+                              <div class="small text-muted mb-1">Добавленные</div>
+                              <ul class="list-group">
+                                <% if (userList.length === 0 && gList.length === 0) { %>
+                                  <li class="list-group-item text-muted">никого</li>
+                                <% } %>
+                                <% userList.forEach(function(u){ %>
+                                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><span class="badge text-bg-primary me-2">user</span><%= u %></span>
+                                    <form method="post" action="/lecturer/webinars/attendees/user/remove" class="mb-0 attendee-remove-form">
+                                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                      <input type="hidden" name="webinarId" value="<%= w.id %>">
+                                      <input type="hidden" name="username" value="<%= u %>">
+                                      <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                                    </form>
+                                  </li>
+                                <% }) %>
+                                <% gList.forEach(function(g){ %>
+                                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><span class="badge text-bg-secondary me-2">group</span><%= g.name %></span>
+                                    <form method="post" action="/lecturer/webinars/attendees/group/remove" class="mb-0 attendee-remove-form">
+                                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                      <input type="hidden" name="webinarId" value="<%= w.id %>">
+                                      <input type="hidden" name="groupId" value="<%= g.id %>">
+                                      <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                                    </form>
+                                  </li>
+                                <% }) %>
+                              </ul>
+                            </div>
+
+                            <div class="mb-2">
+                              <div class="small text-muted mb-1">Добавить пользователя или группу</div>
+                              <form class="d-flex gap-2 attendee-add-form" method="post" action="#">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input type="hidden" name="webinarId" value="<%= w.id %>">
+                                <input type="hidden" name="username" value="">
+                                <input type="hidden" name="groupId" value="">
+                                <select class="form-select form-select-sm flex-fill" name="entity" required>
+                                  <option value="">— выбрать —</option>
+                                  <optgroup label="Пользователи">
+                                    <% (users||[]).forEach(function(u){ if (!userList.includes(u.username)) { %>
+                                      <option value="user:<%= u.username %>"><%= u.username %></option>
+                                    <% } }) %>
+                                  </optgroup>
+                                  <optgroup label="Группы">
+                                    <% (groups||[]).forEach(function(g){ if (!gList.find(x=>x.id===g.id)) { %>
+                                      <option value="group:<%= g.id %>"><%= g.name %></option>
+                                    <% } }) %>
+                                  </optgroup>
+                                </select>
+                                <button class="btn btn-sm btn-primary" type="submit">Добавить</button>
+                              </form>
+                            </div>
+
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="actions-cell">
+                    <div class="actions-stack">
+                      <form method="post" action="/lecturer/webinar/toggle" class="m-0">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="id" value="<%= w.id %>">
+                        <input type="hidden" name="open" value="<%= w.tests_open ? 0 : 1 %>">
+                            <button class="btn btn-sm <%= w.tests_open ? 'btn-outline-warning' : 'btn-outline-primary' %>" type="submit" data-bs-toggle="tooltip" title="<%= w.tests_open ? 'Закрыть доступ к тестам' : 'Открыть доступ к тестам' %>"><i class="bi <%= w.tests_open ? 'bi-lock' : 'bi-unlock' %> me-1"></i> <%= w.tests_open ? 'Закрыть тесты' : 'Открыть тесты' %></button>
+                      </form>
+                      <a class="btn btn-sm btn-outline-primary" href="/lecturer/webinar-tests/<%= w.id %>" data-bs-toggle="tooltip" title="Редактировать вопросы тестов"><i class="bi bi-list-check me-1"></i> Управлять тестами</a>
+                      <div class="schedule-row">
+                        <form method="post" action="/lecturer/webinar/schedule-open" class="d-flex align-items-center gap-1 flex-wrap m-0">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <input type="hidden" name="id" value="<%= w.id %>">
+                          <input type="datetime-local" class="form-control form-control-sm" name="when" data-utc="<%= w.tests_open_at || '' %>">
+                          <button class="btn btn-sm btn-outline-secondary" type="submit" data-bs-toggle="tooltip" title="Запланировать автоматическое открытие тестов"><i class="bi bi-calendar-event me-1"></i> Запланировать</button>
+                        </form>
+                        <form method="post" action="/lecturer/webinar/schedule-clear" class="m-0">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <input type="hidden" name="id" value="<%= w.id %>">
+                          <button class="btn btn-sm btn-outline-danger" type="submit" <%= w.tests_open_at ? '' : 'disabled' %> data-bs-toggle="tooltip" title="Отменить запланированное открытие"><i class="bi bi-x-circle me-1"></i> Снять расписание</button>
+                        </form>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <div class="col-12 col-lg-5">
+        <h6 class="mb-2">Добавить вебинар</h6>
+        <form class="card card-body" method="post" action="/lecturer/webinars/add">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="mb-2">
+            <label class="form-label">Тема</label>
+      <input class="form-control" type="text" name="summary" value="<%= (savedForm && savedForm.summary) ? savedForm.summary : '' %>" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Описание</label>
+      <textarea class="form-control" name="description" rows="3" required><%= (savedForm && savedForm.description) ? savedForm.description : '' %></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Начало</label>
+      <input class="form-control" type="datetime-local" name="start_time" value="<%= (savedForm && savedForm.start_time) ? savedForm.start_time : '' %>" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Окончание</label>
+      <input class="form-control" type="datetime-local" name="end_time" value="<%= (savedForm && savedForm.end_time) ? savedForm.end_time : '' %>" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Курс</label>
+      <select class="form-select" name="courseId" required>
+              <option value="">— не указан —</option>
+              <% courses.forEach(function(c){ %>
+        <option value="<%= c.id %>" <%= (savedForm && String(savedForm.courseId)===String(c.id)) ? 'selected' : '' %>><%= c.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <!-- Раздел убран: вебинары теперь привязаны только к курсам -->
+          <button class="btn btn-primary" type="submit">Создать</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="/js/lecturer-webinars.js?v=<%= assetVersion %>"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Вебинары' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Вебинары' }) %>
+  <div class="container py-4">
+    <% if (typeof warning !== 'undefined' && warning) { %>
+      <div class="alert alert-warning"><%= warning %></div>
+    <% } %>
+    <div class="row g-3">
+      <div class="col-12 col-lg-7">
+        <h5 class="mb-3">Список вебинаров</h5>
+        <div class="table-responsive">
+        <table class="table table-sm table-bordered bg-white align-middle">
+          <thead>
+            <tr><th>#</th><th>Тема</th><th>Начало</th><th>Конец</th><th>Курс</th><th>Открыто</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% if (!webinars || webinars.length === 0) { %>
+              <tr>
+                <td colspan="7">
+                  <%- include('../partials/empty', { icon: 'bi-easel3', title: 'Пока нет вебинаров', hint: 'Создайте первый вебинар справа.' }) %>
+                </td>
+              </tr>
+            <% } else { %>
+              <% webinars.forEach(function(w, idx){ %>
+                <tr>
+                  <td><%= idx + 1 %></td>
+                  <td><%= w.summary || '' %></td>
+                  <td><%= w.start_time || '' %></td>
+                  <td><%= w.end_time || '' %></td>
+                  <td>
+                    <% const course = (courses||[]).find(c=>c.id===w.course_id); %>
+                    <%= course ? course.name : ('курс #' + (w.course_id || '')) %>
+                  </td>
+                  <td><span class="badge <%= w.tests_open ? 'text-bg-success' : 'text-bg-secondary' %>"><%= w.tests_open ? 'Открыто' : 'Закрыто' %></span></td>
+                  <td>
+                    <form method="post" action="/admin/webinar/toggle" class="d-inline">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="id" value="<%= w.id %>">
+                      <input type="hidden" name="open" value="<%= w.tests_open ? 0 : 1 %>">
+                      <button class="btn btn-sm <%= w.tests_open ? 'btn-outline-warning' : 'btn-outline-primary' %>" type="submit"><i class="bi <%= w.tests_open ? 'bi-lock' : 'bi-unlock' %> me-1"></i> <%= w.tests_open ? 'Закрыть тесты' : 'Открыть тесты' %></button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <div class="col-12 col-lg-5">
+        <h5 class="mb-3">Добавить вебинар</h5>
+        <form class="card card-body" method="post" action="/admin/webinars/add">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="mb-2">
+            <label class="form-label">Тема</label>
+      <input class="form-control" type="text" name="summary" value="<%= (savedForm && savedForm.summary) ? savedForm.summary : '' %>" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Описание</label>
+      <textarea class="form-control" name="description" rows="3" required><%= (savedForm && savedForm.description) ? savedForm.description : '' %></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Начало</label>
+      <input class="form-control" type="datetime-local" name="start_time" value="<%= (savedForm && savedForm.start_time) ? savedForm.start_time : '' %>" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Окончание</label>
+      <input class="form-control" type="datetime-local" name="end_time" value="<%= (savedForm && savedForm.end_time) ? savedForm.end_time : '' %>" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Курс</label>
+      <select class="form-select" name="courseId" required>
+              <option value="">— не указан —</option>
+              <% courses.forEach(function(c){ %>
+        <option value="<%= c.id %>" <%= (savedForm && String(savedForm.courseId)===String(c.id)) ? 'selected' : '' %>><%= c.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <!-- Раздел убран: вебинары теперь привязаны только к курсам -->
+          <button class="btn btn-primary" type="submit"><i class="bi bi-plus-circle me-1"></i> Создать</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

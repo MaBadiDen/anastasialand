@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Курсы и лекторы' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Курсы и лекторы' }) %>
+  <div class="container py-4">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <h5 class="mb-3">Курсы</h5>
+        <form class="card card-body mb-3" method="post" action="/admin/courses/add">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="d-flex gap-2">
+            <input class="form-control" name="name" placeholder="Название курса" required>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-plus-circle me-1"></i> Добавить</button>
+          </div>
+        </form>
+        <ul class="list-group">
+          <% if (!courses || courses.length === 0) { %>
+            <li class="list-group-item text-muted">Курсов пока нет</li>
+          <% } else { %>
+            <% courses.forEach(function(c){ %>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>#<%= c.id %> — <%= c.name %></span>
+              </li>
+            <% }) %>
+          <% } %>
+        </ul>
+      </div>
+      <div class="col-12 col-lg-6">
+        <h5 class="mb-3">Назначение лекторов</h5>
+        <form class="card card-body mb-3" method="post" action="/admin/lecturers/grant">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="row g-2 align-items-end">
+            <div class="col-6">
+              <label class="form-label">Лектор</label>
+              <select class="form-select" name="username" required>
+                <% lecturers.forEach(function(u){ %>
+                  <option value="<%= u.username %>"><%= u.username %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Курс</label>
+              <select class="form-select" name="courseId" required>
+                <% courses.forEach(function(c){ %>
+                  <option value="<%= c.id %>"><%= c.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i> Назначить</button>
+              <button class="btn btn-outline-danger" type="submit" formaction="/admin/lecturers/revoke"><i class="bi bi-x-circle me-1"></i> Отозвать</button>
+            </div>
+          </div>
+        </form>
+        <div class="card">
+          <div class="card-body">
+            <h6 class="card-title">Текущие назначения</h6>
+            <table class="table table-sm">
+              <thead><tr><th>Лектор</th><th>Курс</th></tr></thead>
+              <tbody>
+                <% if (!bindings || bindings.length === 0) { %>
+                  <tr><td colspan="2" class="text-muted">Нет назначений</td></tr>
+                <% } else { %>
+                  <% bindings.forEach(function(b){ %>
+                    <tr><td><%= b.username %></td><td>#<%= b.course_id %> — <%= b.course_name %></td></tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

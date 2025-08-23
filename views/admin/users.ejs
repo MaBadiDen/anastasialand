@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('../partials/head', { title: 'Пользователи' }) %>
+<body class="bg-light theme-violet">
+  <%- include('../partials/nav', { title: 'Пользователи' }) %>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Пользователи</h5>
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal"><i class="bi bi-person-plus me-1"></i> Создать</button>
+    </div>
+    <% if (typeof warning !== 'undefined' && warning) { %>
+      <div class="alert alert-warning"><%= warning %></div>
+    <% } %>
+    <% if (typeof message !== 'undefined' && message) { %>
+      <div class="alert alert-success"><%= message %></div>
+    <% } %>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover table-bordered bg-white align-middle">
+        <thead>
+          <tr><th>Логин</th><th>Роль</th><th>Email</th><th style="width:220px"></th></tr>
+        </thead>
+        <tbody>
+          <% if (!users || users.length === 0) { %>
+            <tr>
+              <td colspan="4">
+                <%- include('../partials/empty', { icon: 'bi-person', title: 'Пользователей пока нет', hint: 'Добавьте первого пользователя.' }) %>
+              </td>
+            </tr>
+          <% } %>
+          <% users.forEach(function(u){ %>
+            <tr>
+              <td><code><%= u.username %></code></td>
+              <td><span class="badge <%= u.role==='admin' ? 'text-bg-danger' : (u.role==='lecturer' ? 'text-bg-info' : 'text-bg-secondary') %>"><%= u.role || 'user' %></span></td>
+              <td><%= u.email || '' %></td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <a class="btn btn-outline-primary" href="/admin/user/<%= encodeURIComponent(u.username) %>/progress" data-bs-toggle="tooltip" title="Прогресс"><i class="bi bi-graph-up-arrow"></i></a>
+                  <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editUserModal" data-username="<%= u.username %>" data-role="<%= u.role || 'user' %>" data-email="<%= u.email || '' %>" data-bs-toggle="tooltip" title="Редактировать"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal" data-username="<%= u.username %>" data-bs-toggle="tooltip" title="Удалить"><i class="bi bi-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Create User Modal -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="modal-content" method="post" action="/admin/users/create">
+          <div class="modal-header"><h5 class="modal-title">Создать пользователя</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+          <div class="modal-body">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="mb-2">
+              <label class="form-label">Логин</label>
+              <input class="form-control" name="username" required minlength="3" maxlength="50">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Пароль</label>
+              <input type="password" class="form-control" name="password" required minlength="6" maxlength="100">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" name="email" placeholder="опционально">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Роль</label>
+              <select class="form-select" name="role" required>
+                <option value="user">user</option>
+                <option value="lecturer">lecturer</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-primary">Создать</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="modal-content" method="post" action="/admin/users/update">
+          <div class="modal-header"><h5 class="modal-title">Редактировать пользователя</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+          <div class="modal-body">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="mb-2">
+              <label class="form-label">Логин</label>
+              <input class="form-control" name="username" required readonly>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" name="email">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Роль</label>
+              <select class="form-select" name="role" required>
+                <option value="user">user</option>
+                <option value="lecturer">lecturer</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Новый пароль (необязательно)</label>
+              <input type="password" class="form-control" name="password" minlength="6" maxlength="100" placeholder="оставьте пустым, чтобы не менять">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete User Modal -->
+    <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="modal-content" method="post" action="/admin/users/delete">
+          <div class="modal-header"><h5 class="modal-title">Удалить пользователя</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+          <div class="modal-body">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <p class="mb-1">Удалить пользователя: <strong data-role="username"></strong>?</p>
+            <input type="hidden" name="username" value="">
+            <div class="alert alert-warning mb-0">Действие необратимо.</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-danger">Удалить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="/js/admin-users.js?v=<%= assetVersion %>"></script>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

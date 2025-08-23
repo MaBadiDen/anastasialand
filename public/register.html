@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Регистрация</title>
+  <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet" />
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="/app.css?v=1.0.0" rel="stylesheet" />
+</head>
+<body class="bg-light page-auth">
+  <div class="auth-wrap">
+    <div class="card auth-card mw-420 shadow-soft">
+      <div class="card-body">
+        <h4 class="mb-3"><span class="brand-accent">Регистрация</span></h4>
+        <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+        <form id="registerForm" method="POST" action="/register" class="mb-2">
+          <input type="text" name="username" class="form-control mb-2" placeholder="Имя пользователя" required />
+          <input type="password" name="password" class="form-control mb-2" placeholder="Пароль" required />
+          <input type="email" name="email" class="form-control mb-3" placeholder="Email" required />
+          <input type="hidden" name="_csrf" value="" />
+          <button type="submit" class="btn btn-primary w-100 mb-2"><i class="bi bi-person-plus me-1"></i> Зарегистрироваться</button>
+        </form>
+        <div class="text-end">
+          <a href="/login" class="btn btn-outline-primary btn-sm"><i class="bi bi-box-arrow-in-right me-1"></i> Войти</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/auth-page.js?v=1.0.0"></script>
+</body>
+</html>

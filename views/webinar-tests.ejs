@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<%- include('partials/head', { title: 'Тесты по вебинарам' }) %>
+<body class="page-home theme-violet">
+  <%- include('partials/nav', { title: 'Тесты по вебинарам', username, isAdmin }) %>
+  <div class="container py-5">
+    <div class="row mb-3 mb-md-4">
+      <div class="col">
+        <h1 class="h3 mb-1">Тесты по вебинарам</h1>
+        <p class="text-muted mb-0">Выберите вебинар для прохождения теста</p>
+      </div>
+    </div>
+    <% if ((!webinars || webinars.length === 0)) { %>
+      <div class="alert alert-secondary">Нет доступных вебинаров.</div>
+    <% } %>
+    <div class="row g-3 g-md-4">
+      <% (webinars||[]).forEach(function(w){ %>
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="card tile p-3 h-100">
+            <div class="d-flex align-items-start justify-content-between gap-3">
+              <div class="d-flex align-items-start gap-2">
+                <span class="tile-ico"><i class="bi bi-list-check"></i></span>
+                <div>
+                  <div class="fw-semibold"><%= w.summary || ('Вебинар #' + w.id) %></div>
+                  <div class="text-muted small">
+                    <%= w.start_time || '' %>
+                    <% if (w.course_name) { %>
+                      • <%= w.course_name %>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              <div class="text-end ms-auto">
+                <% if (w.tests_open || isAdmin) { %>
+                  <a class="btn btn-primary btn-sm" href="/webinar-tests/<%= w.id %>">Пройти тесты</a>
+                <% } else { %>
+                  <div class="d-flex flex-column align-items-end">
+                    <span class="badge text-bg-secondary">Закрыто</span>
+                    <% if (w.next_open_at) { %>
+                      <small class="text-muted">Откроется: <%= new Date(w.next_open_at).toLocaleString() %></small>
+                    <% } %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

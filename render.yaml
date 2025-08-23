@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: anastasialand
+    env: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: PORT
+        value: "3000"
+      # PUBLIC_URL will be set after you add your custom domain in Render dashboard
+      - key: VIDEO_DIR
+        value: /opt/render/project/src/data/videos
+      - key: DEBUG_AUTH
+        value: "0"
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 5
