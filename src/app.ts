@@ -849,7 +849,8 @@ app.get('/webinar-tests', requireAuth, (req: express.Request, res: express.Respo
                     JOIN user_groups ug ON ug.group_id = wag.group_id
                     WHERE wag.webinar_id = w.id AND ug.username = ?
                 )
-            ORDER BY w.start_time DESC NULLS LAST, w.id DESC
+            -- Order by start_time DESC with NULLs last in SQLite-compatible way
+            ORDER BY (w.start_time IS NULL) ASC, w.start_time DESC, w.id DESC
             LIMIT 200`;
         db.all(sql, [username, username], (err, rows: any[]) => {
                 if (err) return res.status(500).send('Ошибка загрузки вебинаров');
@@ -1036,7 +1037,9 @@ app.get('/admin/webinars', requireAuth, requireLecturer, csrfProtection, (req: e
         const courseParams: any[] = isAdmin || !courseIds ? [] : courseIds;
         db.all(courseSql, courseParams, (e1:any, courses:any[]) => {
             if (e1) return res.status(500).send('Ошибка загрузки курсов');
-            const webSql = isAdmin || !courseIds ? 'SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars ORDER BY start_time DESC NULLS LAST, id DESC' : `SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars WHERE course_id IN (${courseIds.map(()=>'?').join(',')}) ORDER BY start_time DESC NULLS LAST, id DESC`;
+            const webSql = isAdmin || !courseIds
+                ? 'SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars ORDER BY (start_time IS NULL) ASC, start_time DESC, id DESC'
+                : `SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars WHERE course_id IN (${courseIds.map(()=>'?').join(',')}) ORDER BY (start_time IS NULL) ASC, start_time DESC, id DESC`;
             const webParams = isAdmin || !courseIds ? [] : courseParams;
             db.all(webSql, webParams, (e3:any, webinars:any[]) => {
                 if (e3) return res.status(500).send('Ошибка загрузки вебинаров');
@@ -1122,7 +1125,9 @@ app.get('/lecturer/webinars', requireAuth, requireLecturer, csrfProtection, (req
         const courseParams: any[] = isAdmin || !courseIds ? [] : courseIds;
         db.all(courseSql, courseParams, (e1:any, courses:any[]) => {
             if (e1) return res.status(500).send('Ошибка загрузки курсов');
-            const webSql = isAdmin || !courseIds ? 'SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars ORDER BY start_time DESC NULLS LAST, id DESC' : `SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars WHERE course_id IN (${courseIds.map(()=>'?').join(',')}) ORDER BY start_time DESC NULLS LAST, id DESC`;
+            const webSql = isAdmin || !courseIds
+                ? 'SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars ORDER BY (start_time IS NULL) ASC, start_time DESC, id DESC'
+                : `SELECT id, summary, description, start_time, end_time, tests_open, course_id FROM webinars WHERE course_id IN (${courseIds.map(()=>'?').join(',')}) ORDER BY (start_time IS NULL) ASC, start_time DESC, id DESC`;
             const webParams = isAdmin || !courseIds ? [] : courseParams;
             db.all(webSql, webParams, (e3:any, webinars:any[]) => {
                 if (e3) return res.status(500).send('Ошибка загрузки вебинаров');
