@@ -19,6 +19,9 @@ const EnvSchema = z.object({
   TRUST_PROXY: z.string().optional(),
   DEBUG_AUTH: z.string().optional(),
   PUBLIC_URL: z.string().url().optional(),
+  // Session tuning
+  SESSION_TTL_HOURS: Int.optional(),
+  SESSION_ROLLING: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: Int.optional(),
   SMTP_SECURE: z.string().optional(),
@@ -54,6 +57,10 @@ export const config = {
   trustProxy,
   debugAuth,
   publicUrl,
+  session: {
+    ttlHours: env.SESSION_TTL_HOURS ?? 24 * 7,
+    rolling: (env.SESSION_ROLLING ?? 'true') === 'true',
+  },
   assetVersion: (() => {
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));

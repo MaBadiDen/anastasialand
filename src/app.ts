@@ -123,10 +123,13 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-secret',
     resave: false,
     saveUninitialized: false,
+    rolling: config.session.rolling,
     cookie: {
         httpOnly: true,
         sameSite: 'lax',
-    secure: COOKIE_SECURE
+        secure: COOKIE_SECURE,
+        // Convert hours to ms
+        maxAge: Math.max(15 * 60 * 1000, (config.session.ttlHours || 24) * 60 * 60 * 1000)
     },
     store: IS_TEST ? undefined as any : new SQLiteStore({ db: 'sessions.sqlite', dir: path.join(__dirname, '../data') })
 }));
