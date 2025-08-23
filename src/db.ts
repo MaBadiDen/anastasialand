@@ -3,13 +3,28 @@ import fs from 'fs';
 import path from 'path';
 sqlite3.verbose();
 
-// Resolve database path: prefer data/users.db; fallback to legacy users.db in project root if present
+// Resolve database path: ALWAYS use persistent data/users.db (mounted on Render)
 const rootDir = path.join(__dirname, '..');
 const dataDir = path.join(rootDir, 'data');
 try { fs.mkdirSync(dataDir, { recursive: true }); } catch {}
 const dataDbPath = path.join(dataDir, 'users.db');
 const legacyDbPath = path.join(rootDir, 'users.db');
-const dbPath = fs.existsSync(dataDbPath) ? dataDbPath : (fs.existsSync(legacyDbPath) ? legacyDbPath : dataDbPath);
+// One-time migration: if legacy DB exists in project root and data DB doesn't, move/copy it to data
+try {
+    if (!fs.existsSync(dataDbPath) && fs.existsSync(legacyDbPath)) {
+        try {
+            fs.renameSync(legacyDbPath, dataDbPath);
+        } catch {
+            // Fallback to copy if rename across devices is not possible
+            try {
+                const buf = fs.readFileSync(legacyDbPath);
+                fs.writeFileSync(dataDbPath, buf);
+            } catch {}
+        }
+    }
+} catch {}
+const dbPath = dataDbPath;
+try { if (process.env.DEBUG_AUTH === '1') console.error('[DB] Using SQLite at', dbPath); } catch {}
 
 export const db = new sqlite3.Database(dbPath);
 
